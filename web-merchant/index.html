@@ -6,15 +6,33 @@
   <title>Merchant - เพิ่มเมนู</title>
   <style>
     :root{
-      --bg:#f6f7f9; --card:#ffffff; --text:#111827; --muted:#6b7280; --border:#e5e7eb;
-      --primary:#4f46e5; --primary-hover:#4338ca; --ring:#c7d2fe; --success:#059669; --error:#dc2626;
+      --bg:#fff8f5; --card:#ffffff; --text:#111827; --muted:#6b7280; --border:#eed7cf;
+      --primary:#f97316; --primary-hover:#ea580c; --ring:#fed7aa; --success:#059669; --error:#dc2626;
+      --tomato: rgba(244,63,94,.28); /* red */
+      --mustard: rgba(234,179,8,.28); /* yellow */
+      --basil: rgba(16,185,129,.28); /* green */
     }
     *{ box-sizing:border-box; }
     html,body{ height:100%; }
     body{
       margin:0; background:var(--bg); color:var(--text);
       font: 15px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans Thai", "Noto Sans", Arial, sans-serif;
-      display:grid; place-items:center; padding:24px;
+      display:grid; place-items:center; padding:24px; position:relative; overflow-x:hidden;
+    }
+    /* Foodie blurred blobs */
+    body::before{
+      content:""; position:fixed; inset:-20% -10% auto -10%; height:70vh; z-index:-2;
+      background:
+        radial-gradient(180px 140px at 12% 18%, var(--tomato), transparent 60%),
+        radial-gradient(220px 160px at 90% 12%, var(--mustard), transparent 60%),
+        radial-gradient(200px 200px at 8% 90%, var(--basil), transparent 60%);
+      filter: blur(25px);
+    }
+    /* Subtle dotted paper texture */
+    body::after{
+      content:""; position:fixed; inset:0; z-index:-3; pointer-events:none; opacity:.5;
+      background-image: radial-gradient(rgba(0,0,0,.04) 1px, transparent 1px);
+      background-size: 16px 16px;
     }
     .card{
       width:100%; max-width:560px; background:var(--card); border:1px solid var(--border);
@@ -22,9 +40,12 @@
       padding:24px; overflow:hidden;
     }
     .header{ display:flex; align-items:center; gap:12px; margin-bottom:8px; }
-    .logo{ width:36px; height:36px; border-radius:10px; background:linear-gradient(135deg,#6366f1,#22d3ee); }
+    .logo{ width:40px; height:40px; border-radius:12px; background:linear-gradient(135deg,#fb923c,#ef4444); display:grid; place-items:center; box-shadow:0 6px 14px rgba(249,115,22,.25); }
+    .logo svg{ width:22px; height:22px; color:#fff; }
     h1{ font-size:20px; margin:0; }
     .sub{ color:var(--muted); margin:0 0 16px; font-size:13px; }
+    .chips{ display:flex; flex-wrap:wrap; gap:8px; margin:6px 0 16px; }
+    .chip{ padding:6px 10px; border-radius:999px; background:#fff; border:1px solid var(--border); color:#a16207; font-weight:600; font-size:12px; }
     form{ display:grid; gap:14px; }
     .field{ display:grid; gap:6px; }
     label{ font-weight:600; }
