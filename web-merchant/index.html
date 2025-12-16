@@ -1,76 +1,193 @@
 <!doctype html>
-<html>
+<html lang="th">
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>Merchant - Add Menu</title>
+  <title>Merchant - เพิ่มเมนู</title>
+  <style>
+    :root{
+      --bg:#f6f7f9; --card:#ffffff; --text:#111827; --muted:#6b7280; --border:#e5e7eb;
+      --primary:#4f46e5; --primary-hover:#4338ca; --ring:#c7d2fe; --success:#059669; --error:#dc2626;
+    }
+    *{ box-sizing:border-box; }
+    html,body{ height:100%; }
+    body{
+      margin:0; background:var(--bg); color:var(--text);
+      font: 15px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans Thai", "Noto Sans", Arial, sans-serif;
+      display:grid; place-items:center; padding:24px;
+    }
+    .card{
+      width:100%; max-width:560px; background:var(--card); border:1px solid var(--border);
+      border-radius:16px; box-shadow: 0 10px 25px rgba(0,0,0,.06);
+      padding:24px; overflow:hidden;
+    }
+    .header{ display:flex; align-items:center; gap:12px; margin-bottom:8px; }
+    .logo{ width:36px; height:36px; border-radius:10px; background:linear-gradient(135deg,#6366f1,#22d3ee); }
+    h1{ font-size:20px; margin:0; }
+    .sub{ color:var(--muted); margin:0 0 16px; font-size:13px; }
+    form{ display:grid; gap:14px; }
+    .field{ display:grid; gap:6px; }
+    label{ font-weight:600; }
+    input[type="text"], input[type="number"], input[type="file"]{
+      width:100%; padding:10px 12px; border:1px solid var(--border); border-radius:10px; background:#fff; color:inherit;
+    }
+    input[type="text"]:focus, input[type="number"]:focus, input[type="file"]:focus{
+      outline:none; border-color:var(--primary); box-shadow:0 0 0 4px var(--ring);
+    }
+    .row{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+    .preview{
+      display:none; border:1px dashed var(--border); border-radius:12px; padding:10px; align-items:center; gap:12px;
+      background:#fafafa;
+    }
+    .preview img{ width:64px; height:64px; object-fit:cover; border-radius:8px; border:1px solid var(--border); }
+    .btn{
+      display:inline-flex; align-items:center; justify-content:center; gap:8px;
+      padding:12px 14px; border-radius:10px; border:1px solid transparent; color:#fff; background:var(--primary);
+      cursor:pointer; font-weight:600; width:100%;
+    }
+    .btn:hover{ background:var(--primary-hover); }
+    .btn[disabled]{ opacity:.6; cursor:not-allowed; }
+    .msg{ margin:6px 2px 0; font-size:13px; }
+    .msg.success{ color:var(--success); }
+    .msg.error{ color:var(--error); }
+    footer{ margin-top:12px; color:var(--muted); font-size:12px; text-align:center; }
+    @media (max-width: 420px){ .row{ grid-template-columns:1fr; } }
+  </style>
+  <meta name="color-scheme" content="light dark">
 </head>
 <body>
-  <h2>Add Menu</h2>
+  <main class="card">
+    <div class="header">
+      <div class="logo" aria-hidden="true"></div>
+      <h1>เพิ่มเมนูสินค้า</h1>
+    </div>
+    <p class="sub">กรอกข้อมูลและอัปโหลดรูปภาพเมนู จากนั้นกดบันทึก</p>
 
-  <label>Shop ID</label><br/>
-  <input id="shopId" value="shop_001"/><br/><br/>
+    <form id="form">
+      <div class="field">
+        <label for="shopId">Shop ID</label>
+        <input id="shopId" type="text" value="shop_001" required />
+      </div>
 
-  <label>Menu name</label><br/>
-  <input id="name" placeholder="กาแฟเย็น"/><br/><br/>
+      <div class="row">
+        <div class="field">
+          <label for="name">ชื่อเมนู</label>
+          <input id="name" type="text" placeholder="กาแฟเย็น" required />
+        </div>
+        <div class="field">
+          <label for="price">ราคา (บาท)</label>
+          <input id="price" type="number" inputmode="decimal" min="0" step="0.5" placeholder="45" required />
+        </div>
+      </div>
 
-  <label>Price (THB)</label><br/>
-  <input id="price" type="number" placeholder="45"/><br/><br/>
+      <div class="field">
+        <label for="image">รูปภาพเมนู</label>
+        <input id="image" type="file" accept="image/*" capture="environment" required />
+        <div id="preview" class="preview">
+          <img id="previewImg" alt="ตัวอย่างรูปภาพ"/>
+          <div>
+            <div id="previewName" style="font-weight:600"></div>
+            <div id="previewSize" style="color:var(--muted); font-size:12px;"></div>
+          </div>
+        </div>
+      </div>
 
-  <label>Image</label><br/>
-  <input id="image" type="file" accept="image/*" capture="environment"/><br/><br/>
+      <button id="btn" type="submit" class="btn">บันทึกเมนู</button>
+      <div id="msg" class="msg" role="status" aria-live="polite"></div>
+    </form>
 
-  <button id="btn">Save</button>
-  <p id="msg"></p>
+    <footer>ข้อมูลจะถูกส่งไปยังระบบหลังบ้านโดยอัตโนมัติ</footer>
+  </main>
 
 <script>
 const UPLOAD_BASE = "http://192.168.1.50:8088";
 const N8N_BASE = "http://192.168.1.50:5678";
 
-document.getElementById("btn").addEventListener("click", async () => {
-  const msg = document.getElementById("msg");
-  msg.textContent = "Uploading...";
+const form = document.getElementById('form');
+const msg = document.getElementById('msg');
+const btn = document.getElementById('btn');
+const imageInput = document.getElementById('image');
 
-  const shopId = document.getElementById("shopId").value.trim();
-  const name = document.getElementById("name").value.trim();
-  const price = Number(document.getElementById("price").value);
-  const file = document.getElementById("image").files[0];
+// Image preview
+imageInput.addEventListener('change', () => {
+  const file = imageInput.files && imageInput.files[0];
+  const preview = document.getElementById('preview');
+  if (!file) { preview.style.display = 'none'; return; }
+  const url = URL.createObjectURL(file);
+  document.getElementById('previewImg').src = url;
+  document.getElementById('previewName').textContent = file.name;
+  const sizeKB = Math.round(file.size / 1024);
+  document.getElementById('previewSize').textContent = `${sizeKB} KB`;
+  preview.style.display = 'flex';
+});
 
-  if (!shopId || !name || !price || !file) {
-    msg.textContent = "Please fill shopId, name, price and choose an image.";
+form.addEventListener('submit', async (ev) => {
+  ev.preventDefault();
+  msg.className = 'msg';
+  msg.textContent = 'กำลังอัปโหลด...';
+
+  const shopId = document.getElementById('shopId').value.trim();
+  const name = document.getElementById('name').value.trim();
+  const priceVal = document.getElementById('price').value;
+  const price = parseFloat(priceVal);
+  const file = imageInput.files && imageInput.files[0];
+
+  if (!shopId || !name || !priceVal || isNaN(price) || price <= 0 || !file) {
+    msg.textContent = 'กรอกข้อมูลให้ครบถ้วน และใส่ราคามากกว่า 0';
+    msg.classList.add('error');
     return;
   }
 
-  // 1) upload image to upload service
-  const fd = new FormData();
-  fd.append("file", file);
+  btn.disabled = true;
+  try {
+    // 1) upload image to upload service
+    const fd = new FormData();
+    fd.append('file', file);
 
-  const uploadRes = await fetch(`${UPLOAD_BASE}/upload/menu?shopId=${encodeURIComponent(shopId)}`, {
-    method: "POST",
-    body: fd
-  });
+    const uploadRes = await fetch(`${UPLOAD_BASE}/upload/menu?shopId=${encodeURIComponent(shopId)}`, {
+      method: 'POST',
+      body: fd
+    });
 
-  if (!uploadRes.ok) {
-    msg.textContent = "Upload failed: " + uploadRes.status;
-    return;
+    if (!uploadRes.ok) {
+      msg.textContent = 'อัปโหลดรูปภาพล้มเหลว: ' + uploadRes.status;
+      msg.classList.add('error');
+      return;
+    }
+    const uploadJson = await uploadRes.json(); // { imageUrl: ... }
+    const imageUrl = uploadJson.imageUrl || uploadJson.slipUrl; // เผื่อชื่อ field เป็น slipUrl
+
+    if (!imageUrl) {
+      msg.textContent = 'ไม่พบ URL ของรูปภาพจากเซิร์ฟเวอร์';
+      msg.classList.add('error');
+      return;
+    }
+
+    // 2) call n8n to create menu
+    const createRes = await fetch(`${N8N_BASE}/webhook/api/menu/create`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ shopId, name, price, imageUrl })
+    });
+
+    if (!createRes.ok) {
+      const t = await createRes.text();
+      msg.textContent = 'สร้างเมนูไม่สำเร็จ: ' + t;
+      msg.classList.add('error');
+      return;
+    }
+
+    msg.textContent = 'บันทึกสำเร็จ ✅';
+    msg.classList.add('success');
+    form.reset();
+    document.getElementById('preview').style.display = 'none';
+  } catch (err) {
+    console.error(err);
+    msg.textContent = 'เกิดข้อผิดพลาดในการเชื่อมต่อ';
+    msg.classList.add('error');
+  } finally {
+    btn.disabled = false;
   }
-  const uploadJson = await uploadRes.json(); // { imageUrl: ... }
-  const imageUrl = uploadJson.imageUrl || uploadJson.slipUrl; // เผื่อคุณยังใช้ชื่อ field slipUrl
-
-  // 2) call n8n to create menu
-  const createRes = await fetch(`${N8N_BASE}/webhook/api/menu/create`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ shopId, name, price, imageUrl })
-  });
-
-  if (!createRes.ok) {
-    const t = await createRes.text();
-    msg.textContent = "Create menu failed: " + t;
-    return;
-  }
-
-  msg.textContent = "Saved ✅";
 });
 </script>
 </body>
