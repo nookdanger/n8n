@@ -1,0 +1,64 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: n8n-postgres
+    restart: always
+    environment:
+      POSTGRES_USER: n8n
+      POSTGRES_PASSWORD: n8npass
+      POSTGRES_DB: n8ndb
+    volumes:
+      - ./pgdata:/var/lib/postgresql/data
+
+  n8n:
+    image: n8nio/n8n:latest
+    container_name: n8n
+    restart: always
+    ports:
+      - "5678:5678"
+    environment:
+      DB_TYPE: postgresdb
+      DB_POSTGRESDB_HOST: postgres
+      DB_POSTGRESDB_PORT: 5432
+      DB_POSTGRESDB_DATABASE: n8ndb
+      DB_POSTGRESDB_USER: n8n
+      DB_POSTGRESDB_PASSWORD: n8npass
+
+      N8N_HOST: localhost
+      N8N_PORT: 5678
+      N8N_PROTOCOL: http
+      WEBHOOK_URL: http://localhost:5678
+
+      N8N_ENCRYPTION_KEY: "change_me_to_a_long_random_string"
+      N8N_SECURE_COOKIE: "false"
+      TZ: Asia/Bangkok
+    volumes:
+      - ./n8n_data:/home/node/.n8n
+    depends_on:
+      - postgres
+  upload:
+    image: node:20-alpine
+    container_name: slip-upload
+    restart: always
+    working_dir: /app
+    command: sh -c "npm i && node server.js"
+    ports:
+      - "8088:8088"
+    environment:
+      BASE_URL: "http://192.168.1.50:8088"
+      UPLOAD_DIR: "/data"
+      MAX_MB: "3"
+    volumes:
+      - ./upload_app:/app
+      - ./slips:/data
+  merchant-web:
+    image: nginx:alpine
+    container_name: merchant-web
+    restart: always
+    ports:
+      - "8000:80"
+    volumes:
+      - ./web-merchant:/usr/share/nginx/html:ro
+
+
+

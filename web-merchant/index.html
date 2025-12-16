@@ -1,0 +1,77 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Merchant - Add Menu</title>
+</head>
+<body>
+  <h2>Add Menu</h2>
+
+  <label>Shop ID</label><br/>
+  <input id="shopId" value="shop_001"/><br/><br/>
+
+  <label>Menu name</label><br/>
+  <input id="name" placeholder="กาแฟเย็น"/><br/><br/>
+
+  <label>Price (THB)</label><br/>
+  <input id="price" type="number" placeholder="45"/><br/><br/>
+
+  <label>Image</label><br/>
+  <input id="image" type="file" accept="image/*" capture="environment"/><br/><br/>
+
+  <button id="btn">Save</button>
+  <p id="msg"></p>
+
+<script>
+const UPLOAD_BASE = "http://192.168.1.50:8088";
+const N8N_BASE = "http://192.168.1.50:5678";
+
+document.getElementById("btn").addEventListener("click", async () => {
+  const msg = document.getElementById("msg");
+  msg.textContent = "Uploading...";
+
+  const shopId = document.getElementById("shopId").value.trim();
+  const name = document.getElementById("name").value.trim();
+  const price = Number(document.getElementById("price").value);
+  const file = document.getElementById("image").files[0];
+
+  if (!shopId || !name || !price || !file) {
+    msg.textContent = "Please fill shopId, name, price and choose an image.";
+    return;
+  }
+
+  // 1) upload image to upload service
+  const fd = new FormData();
+  fd.append("file", file);
+
+  const uploadRes = await fetch(`${UPLOAD_BASE}/upload/menu?shopId=${encodeURIComponent(shopId)}`, {
+    method: "POST",
+    body: fd
+  });
+
+  if (!uploadRes.ok) {
+    msg.textContent = "Upload failed: " + uploadRes.status;
+    return;
+  }
+  const uploadJson = await uploadRes.json(); // { imageUrl: ... }
+  const imageUrl = uploadJson.imageUrl || uploadJson.slipUrl; // เผื่อคุณยังใช้ชื่อ field slipUrl
+
+  // 2) call n8n to create menu
+  const createRes = await fetch(`${N8N_BASE}/webhook/api/menu/create`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ shopId, name, price, imageUrl })
+  });
+
+  if (!createRes.ok) {
+    const t = await createRes.text();
+    msg.textContent = "Create menu failed: " + t;
+    return;
+  }
+
+  msg.textContent = "Saved ✅";
+});
+</script>
+</body>
+</html>
