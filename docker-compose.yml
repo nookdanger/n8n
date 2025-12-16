@@ -59,6 +59,6 @@ services:
       - "8000:80"
     volumes:
       - ./web-merchant:/usr/share/nginx/html:ro
-
+      - ./theme:/usr/share/nginx/html/theme:ro
 
 
